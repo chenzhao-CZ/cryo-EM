@@ -111,11 +111,11 @@ def convert(infileName, outfileName):
 										headerParticles[col] = headerCountParticles - 1
 						for key, num in headerParticles.items():
 							if key != '_rlnOpticsGroup':
-								if key =='_rlnOriginXAngst':
+								if key == '_rlnOriginXAngst':
 									outfile.write('_rlnOriginX' + ' #' + str(num + 1) + '\n')
-								elif key =='_rlnOriginYAngst':
+								elif key == '_rlnOriginYAngst':
 									outfile.write('_rlnOriginY' + ' #' + str(num + 1) + '\n')
-								elif key =='_rlnImagePixelSize':
+								elif key == '_rlnImagePixelSize':
 									outfile.write('_rlnDetectorPixelSize' + ' #' + str(num + 1) + '\n')
 								else:
 									outfile.write(key + ' #' + str(num + 1) + '\n')
@@ -133,12 +133,15 @@ def writeParticle(line, headerParticles, opticalGroups, tilt, outfile):
 	items.pop(headerParticles['_rlnOpticsGroup'])
 	items = items + [ opticParameters.AmplitudeContrast, opticParameters.SphericalAberration, \
 			opticParameters.Voltage, opticParameters.ImagePixelSize ]
-	items[headerParticles['_rlnOriginXAngst']] = str(  \
-			eval(items[headerParticles['_rlnOriginXAngst']]) / \
-			eval(items[headerParticles['_rlnImagePixelSize']]) )
-	items[headerParticles['_rlnOriginYAngst']] = str(  \
-			eval(items[headerParticles['_rlnOriginYAngst']]) / \
-			eval(items[headerParticles['_rlnImagePixelSize']]) )
+	try:
+		items[headerParticles['_rlnOriginXAngst']] = str(  \
+				eval(items[headerParticles['_rlnOriginXAngst']]) / \
+				eval(items[headerParticles['_rlnImagePixelSize']]) )
+		items[headerParticles['_rlnOriginYAngst']] = str(  \
+				eval(items[headerParticles['_rlnOriginYAngst']]) / \
+				eval(items[headerParticles['_rlnImagePixelSize']]) )
+	except KeyError:
+		pass
 	items = items + ['10000.000000']
 	if tilt:
 		items = items + [ index , opticParameters.BeamTiltX, opticParameters.BeamTiltY ] 
