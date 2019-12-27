@@ -2,8 +2,8 @@
 # Chen Zhao
 # czhao@rockefeller.edu
 # backdisplay to coordinate star file from particle.star
-# currently work only for relion 3.0-, upgrading soon
 # this script will generate a new directory call Backdisplay with all coordiantes
+# can handle star files from both relion 3.1 and relion 3-
 # to run:
 # python parseSTAR4backdisplay.py particles.star
 #################################################################################
@@ -26,21 +26,45 @@ class anaParticles:
 
 	def parse(self):
 		with open(self.infile, 'r') as star:
-			readHeader = 0
+			self.readHeader = 0
 			for line in star:
-				# parse header
+				if line.startswith('data_optics'):
+					self.__relion31(star)
+				elif line.startswith('data_'):
+					self.__relion3(star)
+
+	def __relion31(self, star):
+		particles = 0
+		for line in star:
+			if not particles:
+				if line.startswith('data_particles'):
+					particles = 1
+			else:
 				if line.startswith('_rln'):
-					readHeader = 1
+					self.readHeader = 1
 					entry = line.split(' ')
 					self.header[entry[0]] = eval(entry[1][1:]) - 1
-				# parse entries
-				elif line.strip() and readHeader:
+				elif line.strip() and self.readHeader:
 					items = line[:-1].split()
 					path = items[self.header['_rlnMicrographName']]
 					if path not in self.particles.keys():
 						self.particles[path] = [ particle(items[self.header['_rlnCoordinateX']], items[self.header['_rlnCoordinateY']], path) ]
 					else:
 						self.particles[path].append( particle(items[self.header['_rlnCoordinateX']], items[self.header['_rlnCoordinateY']], path) )
+
+	def __relion3(self, star):
+		for line in star:
+			if line.startswith('_rln'):
+				self.readHeader = 1
+				entry = line.split(' ')
+				self.header[entry[0]] = eval(entry[1][1:]) - 1
+			elif line.strip() and self.readHeader:
+				items = line[:-1].split()
+				path = items[self.header['_rlnMicrographName']]
+				if path not in self.particles.keys():
+					self.particles[path] = [ particle(items[self.header['_rlnCoordinateX']], items[self.header['_rlnCoordinateY']], path) ]
+				else:
+					self.particles[path].append( particle(items[self.header['_rlnCoordinateX']], items[self.header['_rlnCoordinateY']], path) )
 
 	def writeParticles(self):
 		if not os.path.isdir('BackDisplay'):
